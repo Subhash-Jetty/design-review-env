@@ -1,3 +1,15 @@
+---
+title: Design Review Environment
+emoji: 🏗️
+colorFrom: blue
+colorTo: cyan
+sdk: docker
+sdk_version: latest
+python_version: "3.10"
+app_file: server/app.py
+pinned: false
+---
+
 # 🏗️ Design Review Environment
 
 > **An AI-Driven Engineering Design Review Environment for Agentic RL Training**

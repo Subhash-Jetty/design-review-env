@@ -29,13 +29,9 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_USERNAME: ${{ secrets.HF_USERNAME }}
         run: |
-          # Use Space-specific README with proper config
-          cp README_SPACE.md README.md
-          
           python << 'EOF'
           import os
           import sys
-          from pathlib import Path
           from huggingface_hub import HfApi
           
           hf_token = os.environ.get('HF_TOKEN')
@@ -45,27 +41,30 @@ jobs:
               print("ERROR: HF_TOKEN or HF_USERNAME not set")
               sys.exit(1)
           
-          api = HfApi(token=hf_token)
-          repo_id = f"{hf_username}/design-review-env"
-          
-          print(f"Uploading to: {repo_id}")
-          
-          # Upload entire repo
-          api.upload_folder(
-              folder_path=".",
-              repo_id=repo_id,
-              repo_type="space",
-              ignore_patterns=[
-                  ".git", ".github", "__pycache__", "*.pyc",
-                  ".pytest_cache", ".venv", ".egg-info",
-                  "dist", "build", ".DS_Store", "node_modules",
-                  "SPACES_README.md", "README_SPACE.md"
-              ],
-              commit_message=f"Deploy from GitHub Actions"
-          )
-          
-          print(f"Successfully deployed!")
-          print(f"View at: https://huggingface.co/spaces/{repo_id}")
+          try:
+              api = HfApi(token=hf_token)
+              repo_id = f"{hf_username}/design-review-env"
+              
+              print(f"Uploading to: {repo_id}")
+              
+              api.upload_folder(
+                  folder_path=".",
+                  repo_id=repo_id,
+                  repo_type="space",
+                  ignore_patterns=[
+                      ".git", ".github", "__pycache__", "*.pyc",
+                      ".pytest_cache", ".venv", ".egg-info",
+                      "dist", "build", ".DS_Store", "node_modules",
+                      "SPACES_README.md", "README_SPACE.md"
+                  ],
+                  commit_message="Deploy from GitHub Actions"
+              )
+              
+              print(f"Successfully deployed to: https://huggingface.co/spaces/{repo_id}")
+              
+          except Exception as e:
+              print(f"ERROR: {type(e).__name__}: {e}")
+              sys.exit(1)
           EOF
 
       - name: Verify deployment
