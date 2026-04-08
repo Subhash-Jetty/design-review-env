@@ -34,6 +34,13 @@ def assert_true(condition, msg):
     return condition
 
 
+def _get(obj, key, default=None):
+    """Safely get attribute from a Pydantic model or dict."""
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
 # ── Test 1: All Domains Generate ─────────────────────────────────────────
 
 def test_all_domains():
@@ -127,20 +134,20 @@ def test_full_episode():
     # 1. Inspect
     comp_id = obs.available_components[0]
     result = env.step(ReviewAction(action_type="inspect", component_id=comp_id))
-    passed &= assert_true(result.observation.get("action_valid", False), f"Inspect {comp_id}: valid")
-    passed &= assert_true(result.observation.get("current_component") is not None, "Inspect returns component data")
+    passed &= assert_true(_get(result.observation, "action_valid", False), f"Inspect {comp_id}: valid")
+    passed &= assert_true(_get(result.observation, "current_component") is not None, "Inspect returns component data")
 
     # 2. Request analysis
     result = env.step(ReviewAction(action_type="request_analysis", component_id=comp_id, analysis_type="stress"))
-    passed &= assert_true(result.observation.get("analysis_results") is not None, "Analysis returns results")
+    passed &= assert_true(_get(result.observation, "analysis_results") is not None, "Analysis returns results")
 
     # 3. Compare standard
     result = env.step(ReviewAction(action_type="compare_standard", component_id=comp_id, parameter_name="depth_mm", parameter_value=200.0, standard_code="AISC 360-22"))
-    passed &= assert_true(result.observation.get("standard_check_result") is not None, "Standard check returns results")
+    passed &= assert_true(_get(result.observation, "standard_check_result") is not None, "Standard check returns results")
 
     # 4. Request info
     result = env.step(ReviewAction(action_type="request_info"))
-    passed &= assert_true("Standards" in result.observation.get("step_feedback", ""), "Request info returns standards")
+    passed &= assert_true("Standards" in _get(result.observation, "step_feedback", ""), "Request info returns standards")
 
     # 5. Flag issue (try matching a real flaw)
     state = env.state
@@ -154,11 +161,11 @@ def test_full_episode():
             justification="Testing correct flaw identification",
             standard_reference=flaw.get("standard", ""),
         ))
-        passed &= assert_true("CORRECT" in result.observation.get("step_feedback", ""), "Correct flag: accepted")
+        passed &= assert_true("CORRECT" in _get(result.observation, "step_feedback", ""), "Correct flag: accepted")
 
     # 6. Flag false positive
     result = env.step(ReviewAction(action_type="flag_issue", component_id=comp_id, issue_type="electrical", severity="minor"))
-    passed &= assert_true("FALSE" in result.observation.get("step_feedback", ""), "False positive: detected")
+    passed &= assert_true("FALSE" in _get(result.observation, "step_feedback", ""), "False positive: detected")
 
     # 7. Reject
     result = env.step(ReviewAction(action_type="reject"))
@@ -183,12 +190,12 @@ def test_invalid_actions():
 
     # Invalid component
     result = env.step(ReviewAction(action_type="inspect", component_id="nonexistent_xyz"))
-    passed &= assert_true(not result.observation.get("action_valid", True), "Invalid component: rejected")
+    passed &= assert_true(not _get(result.observation, "action_valid", True), "Invalid component: rejected")
     passed &= assert_true(result.reward < 0, "Invalid component: negative reward")
 
     # Invalid action type
     result = env.step(ReviewAction(action_type="explode"))
-    passed &= assert_true(not result.observation.get("action_valid", True), "Invalid action type: rejected")
+    passed &= assert_true(not _get(result.observation, "action_valid", True), "Invalid action type: rejected")
 
     return passed
 

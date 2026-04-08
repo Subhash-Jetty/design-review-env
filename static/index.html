@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Review Engine — AI-Driven Engineering Design Review</title>
+    <meta name="description" content="An agentic RL environment where AI acts as a senior design reviewer across 4 engineering domains. Built for the Meta OpenEnv Hackathon 2026.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+</head>
+<body>
+    <div id="app">
+        <!-- ═══ Header ═══ -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">🏗️</div>
+                <div>
+                    <div class="header-title text-gradient">Design Review Engine</div>
+                    <div class="header-subtitle">AI-Driven Engineering Design Review • OpenEnv v2.0</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-badge">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Ready</span>
+                </div>
+                <div class="status-badge">
+                    <span>🏆</span>
+                    <span>Meta Hackathon 2026</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══ Main Content ═══ -->
+        <div class="main-content">
+            <!-- ─── Left Sidebar: Controls ─── -->
+            <aside class="sidebar-left">
+                <!-- Domain Selector -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">🏛️</span> Engineering Domain
+                    </div>
+                    <div class="domain-grid" id="domainGrid">
+                        <button class="domain-btn active" data-domain="bridge_truss">
+                            <span class="icon">🌉</span>
+                            Bridge Truss
+                        </button>
+                        <button class="domain-btn" data-domain="pressure_vessel">
+                            <span class="icon">🏭</span>
+                            Pressure Vessel
+                        </button>
+                        <button class="domain-btn" data-domain="gear_assembly">
+                            <span class="icon">⚙️</span>
+                            Gear Assembly
+                        </button>
+                        <button class="domain-btn" data-domain="building_frame">
+                            <span class="icon">🏢</span>
+                            Building Frame
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">📊</span> Difficulty Level
+                    </div>
+                    <div class="difficulty-row" id="difficultyRow">
+                        <button class="diff-btn easy" data-diff="easy">Easy</button>
+                        <button class="diff-btn medium active" data-diff="medium">Medium</button>
+                        <button class="diff-btn hard" data-diff="hard">Hard</button>
+                    </div>
+                </div>
+
+                <!-- Seed -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">🎲</span> Random Seed
+                    </div>
+                    <div class="seed-input-group">
+                        <input type="number" class="seed-input" id="seedInput" placeholder="Auto" min="1" max="99999">
+                        <button class="seed-random" id="randomSeedBtn" title="Generate random seed">🎲</button>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="panel" style="border:none; background:none; padding: 0;">
+                    <button class="btn-primary" id="newDesignBtn" onclick="app.resetEnvironment()">
+                        <span>🔧</span> Generate New Design
+                    </button>
+                </div>
+
+                <div class="panel" style="border:none; background:none; padding: 0;">
+                    <button class="btn-primary btn-demo" id="runDemoBtn" onclick="app.startDemo()" disabled>
+                        <span>🤖</span> Run Expert Agent
+                    </button>
+                </div>
+
+                <div class="panel" id="demoControls" style="border:none; background:none; padding: 0;" class="hidden">
+                    <button class="btn-secondary" id="nextStepBtn" onclick="app.demoNextStep()" disabled>
+                        <span>⏭️</span> Next Step
+                    </button>
+                    <div style="display:flex; gap:0.4rem; margin-top: 0.5rem;">
+                        <button class="btn-secondary" id="autoPlayBtn" onclick="app.toggleAutoPlay()" disabled style="font-size:0.72rem;">
+                            <span>▶️</span> Auto Play
+                        </button>
+                        <button class="btn-secondary" onclick="app.stopDemo()" style="font-size:0.72rem;">
+                            <span>⏹️</span> Stop
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Agent Reasoning -->
+                <div class="panel hidden" id="reasoningPanel">
+                    <div class="panel-header">
+                        <span class="icon">🧠</span> Agent Reasoning
+                    </div>
+                    <div class="agent-reasoning">
+                        <div class="agent-reasoning-header">
+                            <span>💭</span> Expert Analysis
+                        </div>
+                        <div class="agent-reasoning-text" id="reasoningText">
+                            Waiting for agent action...
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ─── Center: Main Dashboard ─── -->
+            <main class="center-content" id="centerContent">
+                <!-- Welcome Screen (shown initially) -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-content">
+                        <div class="welcome-icon">🏗️</div>
+                        <h2 class="text-gradient">AI Design Review Engine</h2>
+                        <p>An agentic RL environment where AI acts as a senior engineering design reviewer. Select a domain and generate a design to begin.</p>
+                        <div class="welcome-features">
+                            <div class="welcome-feature">
+                                <span class="icon">🌉</span> 4 Engineering Domains
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="icon">⚡</span> Physics-Backed Analysis
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="icon">📋</span> Standards Compliance
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="icon">🎯</span> 6-Axis Scoring
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="icon">🤖</span> Expert Agent Demo
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="icon">🛡️</span> Safety-Critical AI
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Dashboard (shown after reset) -->
+                <div id="dashboardContent" class="hidden">
+                    <!-- Design Briefing -->
+                    <div class="briefing-card animate-in" id="briefingCard">
+                        <div class="briefing-header">
+                            <h3>📋 Design Briefing</h3>
+                            <span class="design-id-badge" id="designIdBadge">—</span>
+                        </div>
+                        <div class="briefing-body">
+                            <div class="briefing-field">
+                                <label>Domain</label>
+                                <p id="briefDomain">—</p>
+                            </div>
+                            <div class="briefing-field">
+                                <label>Difficulty</label>
+                                <p id="briefDifficulty">—</p>
+                            </div>
+                            <div class="briefing-field full-width">
+                                <label>Design Summary</label>
+                                <p id="briefSummary">—</p>
+                            </div>
+                            <div class="briefing-field full-width">
+                                <label>Requirements</label>
+                                <p id="briefRequirements">—</p>
+                            </div>
+                            <div class="briefing-field full-width">
+                                <label>Applicable Standards</label>
+                                <div class="standards-list" id="briefStandards"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Components Section -->
+                    <div class="panel animate-in animate-in-delay-1">
+                        <div class="panel-header">
+                            <span class="icon">🔩</span> Components
+                            <span style="margin-left:auto; font-size:0.7rem; color:var(--text-muted);" id="compCount">0 total</span>
+                        </div>
+                        <div class="components-grid" id="componentsGrid"></div>
+                    </div>
+
+                    <!-- Inspection Detail -->
+                    <div class="panel inspection-panel hidden" id="inspectionPanel">
+                        <div class="panel-header">
+                            <span class="icon">🔍</span> Component Inspection
+                            <span style="margin-left:auto; font-size:0.75rem; color:var(--accent-cyan);" id="inspCompName">—</span>
+                        </div>
+                        <div class="params-grid" id="paramsGrid"></div>
+                    </div>
+
+                    <!-- Analysis Results -->
+                    <div class="panel analysis-card hidden" id="analysisPanel">
+                        <div class="panel-header" style="margin-bottom: 0.75rem;">
+                            <span class="icon">📊</span> Physics Analysis
+                            <span class="analysis-status" id="analysisStatus" style="margin-left:auto;">—</span>
+                        </div>
+                        <div id="analysisContent"></div>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div class="action-bar animate-in animate-in-delay-2" id="actionBar">
+                        <button class="action-btn" onclick="app.doAction('inspect')" title="Inspect a component" id="btnInspect">
+                            🔍 Inspect
+                        </button>
+                        <button class="action-btn" onclick="app.doAction('request_analysis')" title="Run physics analysis" id="btnAnalysis">
+                            📊 Analyze
+                        </button>
+                        <button class="action-btn" onclick="app.doAction('compare_standard')" title="Check against standard" id="btnStandard">
+                            📋 Standard Check
+                        </button>
+                        <button class="action-btn" onclick="app.doAction('request_info')" title="Get design context" id="btnInfo">
+                            📚 Request Info
+                        </button>
+                        <button class="action-btn" onclick="app.openFlagModal()" title="Flag a detected issue" id="btnFlag">
+                            🚩 Flag Issue
+                        </button>
+                        <button class="action-btn approve" onclick="app.doAction('approve')" title="Approve the design" id="btnApprove">
+                            ✅ Approve
+                        </button>
+                        <button class="action-btn reject" onclick="app.doAction('reject')" title="Reject the design" id="btnReject">
+                            ❌ Reject
+                        </button>
+                    </div>
+
+                    <!-- Feedback -->
+                    <div class="feedback-bar hidden" id="feedbackBar"></div>
+
+                    <!-- Episode Complete Banner -->
+                    <div class="episode-banner hidden" id="episodeBanner">
+                        <h3>🏁 Episode Complete</h3>
+                        <div class="final-score" id="finalScore">0</div>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;" id="finalDecision">—</p>
+                    </div>
+                </div>
+            </main>
+
+            <!-- ─── Right Sidebar: Metrics ─── -->
+            <aside class="sidebar-right">
+                <!-- Composite Score -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">🎯</span> Composite Score
+                    </div>
+                    <div class="score-circle-wrapper">
+                        <div class="score-circle">
+                            <svg viewBox="0 0 160 160">
+                                <defs>
+                                    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#6366f1"/>
+                                        <stop offset="100%" style="stop-color:#06b6d4"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="bg-ring" cx="80" cy="80" r="65"/>
+                                <circle class="score-ring" id="scoreRing" cx="80" cy="80" r="65"
+                                    stroke-dasharray="408.4" stroke-dashoffset="408.4"/>
+                            </svg>
+                            <div class="score-value">
+                                <div class="score-number text-gradient" id="scoreNumber">—</div>
+                                <div class="score-label">out of 100</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scoring Dimensions -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">📈</span> Scoring Dimensions
+                    </div>
+                    <div id="dimensionsContainer">
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span class="dimension-name">Detection Precision</span>
+                                <span class="dimension-score" id="dim_precision">0%</span>
+                            </div>
+                            <div class="dimension-bar"><div class="dimension-bar-fill" id="dimBar_precision" style="width:0%"></div></div>
+                        </div>
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span class="dimension-name">Detection Recall</span>
+                                <span class="dimension-score" id="dim_recall">0%</span>
+                            </div>
+                            <div class="dimension-bar"><div class="dimension-bar-fill" id="dimBar_recall" style="width:0%"></div></div>
+                        </div>
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span class="dimension-name">Severity Accuracy</span>
+                                <span class="dimension-score" id="dim_severity">0%</span>
+                            </div>
+                            <div class="dimension-bar"><div class="dimension-bar-fill" id="dimBar_severity" style="width:0%;background:var(--gradient-warning)"></div></div>
+                        </div>
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span class="dimension-name">Efficiency</span>
+                                <span class="dimension-score" id="dim_efficiency">0%</span>
+                            </div>
+                            <div class="dimension-bar"><div class="dimension-bar-fill" id="dimBar_efficiency" style="width:0%;background:var(--gradient-success)"></div></div>
+                        </div>
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span class="dimension-name">Reasoning Quality</span>
+                                <span class="dimension-score" id="dim_reasoning">0%</span>
+                            </div>
+                            <div class="dimension-bar"><div class="dimension-bar-fill" id="dimBar_reasoning" style="width:0%"></div></div>
+                        </div>
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span class="dimension-name">Ethical Safety</span>
+                                <span class="dimension-score" id="dim_ethical">0%</span>
+                            </div>
+                            <div class="dimension-bar"><div class="dimension-bar-fill" id="dimBar_ethical" style="width:0%;background:linear-gradient(135deg,#f43f5e,#ef4444)"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step Info -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">📍</span> Episode Progress
+                    </div>
+                    <div class="step-info">
+                        <div class="step-stat">
+                            <div class="step-stat-value" id="stepsUsed">0</div>
+                            <div class="step-stat-label">Steps Used</div>
+                        </div>
+                        <div class="step-stat">
+                            <div class="step-stat-value" id="stepsLeft">—</div>
+                            <div class="step-stat-label">Remaining</div>
+                        </div>
+                        <div class="step-stat">
+                            <div class="step-stat-value positive" id="flawsFound">0</div>
+                            <div class="step-stat-label">Flaws Found</div>
+                        </div>
+                        <div class="step-stat">
+                            <div class="step-stat-value" id="totalReward">0.0</div>
+                            <div class="step-stat-label">Total Reward</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transcript -->
+                <div class="panel" style="flex:1; display:flex; flex-direction:column;">
+                    <div class="panel-header">
+                        <span class="icon">📜</span> Action Transcript
+                    </div>
+                    <div class="transcript-feed" id="transcriptFeed">
+                        <div class="transcript-item info">
+                            <div class="transcript-step">System</div>
+                            <div class="transcript-text">Waiting for design generation...</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- ═══ Flag Issue Modal ═══ -->
+    <div class="modal-overlay hidden" id="flagModal">
+        <div class="modal">
+            <h3>🚩 Flag Issue</h3>
+            <div class="form-group">
+                <label>Component</label>
+                <select class="form-select" id="flagComponent"></select>
+            </div>
+            <div class="form-group">
+                <label>Issue Type</label>
+                <select class="form-select" id="flagIssueType">
+                    <option value="structural">Structural</option>
+                    <option value="material">Material</option>
+                    <option value="safety">Safety</option>
+                    <option value="tolerance">Tolerance</option>
+                    <option value="dimensional">Dimensional</option>
+                    <option value="fatigue">Fatigue</option>
+                    <option value="corrosion">Corrosion</option>
+                    <option value="thermal">Thermal</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Severity</label>
+                <select class="form-select" id="flagSeverity">
+                    <option value="critical">🔴 Critical</option>
+                    <option value="major">🟠 Major</option>
+                    <option value="minor">🟡 Minor</option>
+                    <option value="cosmetic">🔵 Cosmetic</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Standard Reference</label>
+                <input class="form-input" id="flagStandard" placeholder="e.g. AISC 360-22 Chapter E">
+            </div>
+            <div class="form-group">
+                <label>Justification</label>
+                <textarea class="form-textarea" id="flagJustification" placeholder="Explain why this is an issue..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.closeFlagModal()">Cancel</button>
+                <button class="btn-primary" onclick="app.submitFlag()" style="background:var(--gradient-danger);">🚩 Submit Flag</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Analysis Request Modal ═══ -->
+    <div class="modal-overlay hidden" id="analysisModal">
+        <div class="modal">
+            <h3>📊 Request Physics Analysis</h3>
+            <div class="form-group">
+                <label>Component</label>
+                <select class="form-select" id="analysisComponent"></select>
+            </div>
+            <div class="form-group">
+                <label>Analysis Type</label>
+                <select class="form-select" id="analysisType">
+                    <option value="stress">Stress Analysis</option>
+                    <option value="deflection">Deflection Analysis</option>
+                    <option value="buckling">Buckling Analysis</option>
+                    <option value="weld_capacity">Weld Capacity</option>
+                    <option value="bolt_capacity">Bolt Capacity</option>
+                    <option value="safety_factor">Safety Factor</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.closeAnalysisModal()">Cancel</button>
+                <button class="btn-primary" onclick="app.submitAnalysis()">📊 Run Analysis</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Inspect Modal ═══ -->
+    <div class="modal-overlay hidden" id="inspectModal">
+        <div class="modal">
+            <h3>🔍 Inspect Component</h3>
+            <div class="form-group">
+                <label>Select Component</label>
+                <select class="form-select" id="inspectComponent"></select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="document.getElementById('inspectModal').classList.add('hidden')">Cancel</button>
+                <button class="btn-primary" onclick="app.submitInspect()">🔍 Inspect</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -17,12 +17,21 @@ Supports 4 engineering domains:
 
 from enum import Enum
 from typing import Optional, Dict, Any, List
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 try:
     from openenv.core.env_server.types import Action, Observation, State
 except ImportError:
-    from openenv.core.env_server import Action, Observation, State
+    try:
+        from openenv.core.env_server import Action, Observation, State
+    except ImportError:
+        # Standalone fallback — no openenv-core needed
+        class Action(BaseModel):
+            pass
+        class Observation(BaseModel):
+            pass
+        class State(BaseModel):
+            pass
 
 
 # ── Enums for type safety ──────────────────────────────────────────────────

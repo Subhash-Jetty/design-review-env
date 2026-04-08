@@ -109,9 +109,9 @@ def run_expert_agent(domain="bridge_truss", difficulty="medium", seed=42):
         result = env.step(action)
         obs_dict = result.observation
 
-        comp = obs_dict.get("current_component", {})
-        comp_name = comp.get("name", comp_id) if comp else comp_id
-        comp_type = comp.get("component_type", "unknown") if comp else "unknown"
+        comp = obs_dict.current_component or {}
+        comp_name = comp.get("name", comp_id) if isinstance(comp, dict) else comp_id
+        comp_type = comp.get("component_type", "unknown") if isinstance(comp, dict) else "unknown"
 
         print(f"\n  [{step_num}] Inspecting: {colorize(comp_name, CYAN)}")
         if comp:
@@ -141,7 +141,7 @@ def run_expert_agent(domain="bridge_truss", difficulty="medium", seed=42):
             )
             result = env.step(action)
             obs_dict = result.observation
-            analysis = obs_dict.get("analysis_results", {})
+            analysis = obs_dict.analysis_results or {}
 
             if analysis:
                 status = analysis.get("status", "N/A")
@@ -181,7 +181,7 @@ def run_expert_agent(domain="bridge_truss", difficulty="medium", seed=42):
         result = env.step(action)
         obs_dict = result.observation
 
-        matched = "🎯 CORRECT" if "CORRECT" in obs_dict.get("step_feedback", "") else "❌ FALSE POS"
+        matched = "🎯 CORRECT" if "CORRECT" in obs_dict.step_feedback else "❌ FALSE POS"
         color = GREEN if "CORRECT" in matched else RED
         print(f"\n  [{step_num}] {colorize(matched, color)}: {issue_type}/{severity} on {comp_id}")
         print(f"       Standard: {standard}")
@@ -227,7 +227,7 @@ def run_expert_agent(domain="bridge_truss", difficulty="medium", seed=42):
             result = env.step(action)
             obs_dict = result.observation
 
-            matched = "🎯 CORRECT" if "CORRECT" in obs_dict.get("step_feedback", "") else "❌ FALSE POS"
+            matched = "🎯 CORRECT" if "CORRECT" in obs_dict.step_feedback else "❌ FALSE POS"
             color = GREEN if "CORRECT" in matched else RED
             print(f"\n  [{step_num}] {colorize(matched, color)}: {issue_type}/{severity} on {comp_id}")
 
@@ -251,7 +251,7 @@ def run_expert_agent(domain="bridge_truss", difficulty="medium", seed=42):
         result = env.step(action)
         obs_dict = result.observation
         print(f"\n  [{step_num}] Decision: {colorize(decision, YELLOW)}")
-        print(f"       {obs_dict.get('step_feedback', '')}")
+        print(f"       {obs_dict.step_feedback}")
 
     # Final Summary
     state = env.state

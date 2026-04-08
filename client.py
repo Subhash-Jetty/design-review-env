@@ -11,7 +11,7 @@ except ImportError:
         def __init__(self, *args, **kwargs):
             pass
 
-from .models import ReviewAction, ReviewObservation, ReviewState
+from models import ReviewAction, ReviewObservation, ReviewState
 
 
 class ReviewEnv(EnvClient):

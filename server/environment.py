@@ -390,6 +390,10 @@ class DesignReviewEnvironment(Environment):
             self._state.composite_score = summary["composite_score"]
             self._state.detection_precision = summary["dimensions"]["detection_precision"]["score"]
             self._state.detection_recall = summary["dimensions"]["detection_recall"]["score"]
+            self._state.severity_accuracy = summary["dimensions"]["severity_accuracy"]["score"]
+            self._state.efficiency_score = summary["dimensions"]["efficiency"]["score"]
+            self._state.reasoning_quality = summary["dimensions"]["reasoning_quality"]["score"]
+            self._state.ethical_score = summary["dimensions"]["ethical_safety"]["score"]
 
             feedback += f"\n\n{'='*50}\n📊 EPISODE SCORE: {summary['composite_score']}/100\n{'='*50}"
             for dim, info in summary["dimensions"].items():
@@ -416,10 +420,12 @@ class DesignReviewEnvironment(Environment):
             step_feedback=feedback,
             action_valid=valid,
             hint=hint,
+            reward=reward,
+            done=is_done,
         )
 
         return StepResult(
-            observation=obs.model_dump(),
+            observation=obs,
             reward=reward,
             done=is_done,
         )

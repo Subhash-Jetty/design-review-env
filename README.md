@@ -107,7 +107,14 @@ The grader evaluates agents across 6 weighted dimensions, producing a **0-100 co
 ### Installation
 
 ```bash
-pip install openenv-core pydantic numpy
+pip install openenv-core>=0.2.0 openai pydantic numpy
+```
+
+If you want to validate local OpenEnv deployment readiness, install `uv` and generate `uv.lock`:
+
+```bash
+pip install uv
+uv lock
 ```
 
 ### Run the Test Suite
@@ -132,6 +139,15 @@ python demo_agent.py --all-domains --difficulty medium
 ```bash
 python benchmark.py --episodes 12
 ```
+
+### Run the OpenAI Baseline Inference Agent
+
+```bash
+export OPENAI_API_KEY="your_api_key"
+python baseline_inference.py --domain bridge_truss --difficulty medium --seed 42
+```
+
+The baseline runner uses the OpenAI API to generate stepwise review actions and logs the episode transcript.
 
 ### Start the Web Server
 
@@ -223,6 +239,7 @@ design_review_env/
 ├── demo_agent.py            # Expert rule-based demo agent
 ├── test_env.py              # Comprehensive test suite
 ├── benchmark.py             # Multi-episode benchmark runner
+├── baseline_inference.py    # OpenAI-powered baseline agent runner
 ├── README.md                # This file
 ├── .gitignore
 └── server/
