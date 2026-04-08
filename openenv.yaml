@@ -1,0 +1,24 @@
+name: design_review_env
+version: 2.0.0
+description: "AI-Driven Engineering Design Review — Multi-domain agentic RL environment for training AI design reviewers"
+author: "jetty"
+tags:
+  - engineering
+  - cad
+  - design-review
+  - multi-agent
+  - safety-critical
+  - physics-simulation
+category: autonomous_systems
+server:
+  dockerfile: server/Dockerfile
+  port: 8000
+domains:
+  - bridge_truss
+  - pressure_vessel
+  - gear_assembly
+  - building_frame
+difficulties:
+  - easy
+  - medium
+  - hard
