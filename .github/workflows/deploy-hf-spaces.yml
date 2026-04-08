@@ -29,6 +29,9 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_USERNAME: ${{ secrets.HF_USERNAME }}
         run: |
+          # Use Space-specific README with proper config
+          cp README_SPACE.md README.md
+          
           python << 'EOF'
           import os
           import sys
@@ -55,7 +58,8 @@ jobs:
               ignore_patterns=[
                   ".git", ".github", "__pycache__", "*.pyc",
                   ".pytest_cache", ".venv", ".egg-info",
-                  "dist", "build", ".DS_Store", "node_modules"
+                  "dist", "build", ".DS_Store", "node_modules",
+                  "SPACES_README.md", "README_SPACE.md"
               ],
               commit_message=f"Deploy from GitHub Actions"
           )
