@@ -19,52 +19,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Git
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Clone HF Space repo
-        run: |
-          git clone https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/design-review-env hf-space
+      - name: Deploy to HF Spaces using git
         env:
           HF_USERNAME: ${{ secrets.HF_USERNAME }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-
-      - name: Copy files to Space
         run: |
-          # Copy all files, excluding git and build artifacts
-          rsync -av \
-            --exclude='.git' \
-            --exclude='__pycache__' \
-            --exclude='*.pyc' \
-            --exclude='.pytest_cache' \
-            --exclude='.venv' \
-            --exclude='.egg-info' \
-            --exclude='dist' \
-            --exclude='build' \
-            --exclude='.github' \
-            ./ hf-space/
+          # Configure git
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          
+          # Create temporary directory
+          mkdir -p /tmp/hf-deploy
+          cd /tmp/hf-deploy
+          
+          # Clone HF Space repository with credentials embedded in URL
+          echo "Cloning HF Space repository..."
+          git clone "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/design-review-env.git" . || exit 1
+          
+          echo "Syncing files from GitHub repo..."
+          # Copy files from GitHub workspace (excluding git, build artifacts, and workflows)
+          cd /tmp/hf-deploy
+          rm -rf .git .github __pycache__ .pytest_cache .venv .egg-info dist build *.pyc
+          
+          # Copy all files from workspace
+          cp -r ${GITHUB_WORKSPACE}/* . 2>/dev/null || true
+          cp -r ${GITHUB_WORKSPACE}/.[a-zA-Z]* . 2>/dev/null || true
+          
+          # Remove workflow files and workspace git
+          rm -rf .git .github __pycache__ .pytest_cache .venv *.pyc
           
           # Use Space-specific README
-          cp README_SPACE.md hf-space/README.md
-
-      - name: Commit and push to HF Space
-        run: |
-          cd hf-space
+          cp README_SPACE.md README.md 2>/dev/null || true
+          
+          # Initialize git again for Space repo
+          git init
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
           git add -A
+          
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Auto-deploy from GitHub: $(date)"
-            git push origin main
+            git commit -m "Auto-deploy from GitHub Actions on $(date)"
+            git remote add origin "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/design-review-env.git"
+            git push origin main --force
             echo "Successfully deployed to Hugging Face Spaces!"
           fi
-        env:
-          GIT_AUTHOR_NAME: github-actions
-          GIT_AUTHOR_EMAIL: actions@github.com
-          GIT_COMMITTER_NAME: github-actions
-          GIT_COMMITTER_EMAIL: actions@github.com
 
   verify:
     runs-on: ubuntu-latest
