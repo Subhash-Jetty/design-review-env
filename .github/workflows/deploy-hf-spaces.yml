@@ -45,6 +45,9 @@ jobs:
             --exclude='build' \
             --exclude='.github' \
             ./ hf-space/
+          
+          # Use Space-specific README
+          cp README_SPACE.md hf-space/README.md
 
       - name: Commit and push to HF Space
         run: |
